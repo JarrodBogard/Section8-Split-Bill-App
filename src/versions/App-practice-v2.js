@@ -26,19 +26,14 @@ export default function App() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
 
-  function handleShowAddFriend() {
-    setShowAddFriend((current) => !current);
-    setSelectedFriend(null); // useful???
-  }
-
   function handleAddFriend(friend) {
     setFriends((currentFriends) => [...currentFriends, friend]);
     setShowAddFriend(false);
   }
 
   function handleSelection(friend) {
-    setSelectedFriend((currentFriend) =>
-      currentFriend?.id === friend.id ? null : friend
+    setSelectedFriend((currentSelected) =>
+      currentSelected?.id !== friend.id ? friend : null
     );
     setShowAddFriend(false);
   }
@@ -58,7 +53,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="sidebar">
-        <FriendsList
+        <FriendList
           friends={friends}
           selectedFriend={selectedFriend}
           onSelection={handleSelection}
@@ -66,23 +61,23 @@ export default function App() {
 
         {showAddFriend && <FormAddFriend onAddFriend={handleAddFriend} />}
 
-        <Button onClick={handleShowAddFriend}>
-          {showAddFriend ? "Close" : "Add friend"}
+        <Button onClick={() => setShowAddFriend((current) => !current)}>
+          {showAddFriend ? "Close" : "Add Friend"}
         </Button>
       </div>
 
       {selectedFriend && (
         <FormSplitBill
+          key={selectedFriend.id}
           selectedFriend={selectedFriend}
           onSplitBill={handleSplitBill}
-          key={selectedFriend.id}
         />
       )}
     </div>
   );
 }
 
-function FriendsList({ friends, selectedFriend, onSelection }) {
+function FriendList({ friends, selectedFriend, onSelection }) {
   return (
     <ul>
       {friends.map((friend) => (
@@ -104,20 +99,17 @@ function Friend({ friend, selectedFriend, onSelection }) {
     <li className={isSelected ? "selected" : ""}>
       <img src={friend.image} alt={friend.name} />
       <h3>{friend.name}</h3>
-
-      {friend.balance < 0 && (
-        <p className="red">
-          You owe {friend.name} ${Math.abs(friend.balance)}.
-        </p>
-      )}
-
-      {friend.balance > 0 && (
-        <p className="green">
-          {friend.name} owes you ${Math.abs(friend.balance)}.
-        </p>
-      )}
-
-      {friend.balance === 0 && <p>You and {friend.name} are even.</p>}
+      <p
+        className={
+          friend.balance > 0 ? "green" : friend.balance < 0 ? "red" : ""
+        }
+      >
+        {friend.balance < 0
+          ? `You owe ${friend.name} $${Math.abs(friend.balance)}.`
+          : friend.balance > 0
+          ? `${friend.name} owes you $${Math.abs(friend.balance)}.`
+          : `You and ${friend.name} are even.`}
+      </p>
 
       <Button onClick={() => onSelection(friend)}>
         {isSelected ? "Close" : "Select"}
@@ -132,6 +124,7 @@ function FormAddFriend({ onAddFriend }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+
     if (!name || !img) return;
 
     const id = crypto.randomUUID();
@@ -144,7 +137,6 @@ function FormAddFriend({ onAddFriend }) {
     };
 
     onAddFriend(newFriend);
-
     setName("");
     setImg("https://i.pravatar.cc/48");
   }
